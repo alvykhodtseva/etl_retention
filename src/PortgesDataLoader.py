@@ -91,6 +91,8 @@ class PostgresDataLoader:
 
 		result: List[str] = [i[0] for i in self.db_worker.get_iterable(query)]
 
+		logger.debug("Results: {}".format(result))
+
 		return result
 
 	def __upsert_to_postgres(self, df: pd.DataFrame, table: str) -> Tuple[bool, str]:
@@ -128,7 +130,6 @@ class PostgresDataLoader:
 		VALUES {2}
 		'''.format(table, columns_s, v)
 
-		# c for constraints
 		query += ' ON CONFLICT ({}) DO UPDATE SET '.format(', '.join(constraints))
 
 		query += ', '.join([i + ' = excluded.{}'.format(i) for i in columns])
