@@ -86,7 +86,7 @@ df = bq.get_dataframe(
         logins AS (
           SELECT id_user, date_created 
           FROM product.users_logins 
-          WHERE date_created '{}' BETWEEN '{}'
+          WHERE date_created BETWEEN '{}' AND '{}'
         )
 
 
