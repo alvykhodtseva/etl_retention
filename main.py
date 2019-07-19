@@ -46,7 +46,7 @@ ld = ld if ld else dt.date.today() - timedelta(days=1)
 
 last_date = pd.to_datetime(ld).date()
 
-period = dt.date.today() - timedelta(days=30)
+period = dt.date.today() - timedelta(days=7)
 
 df_payments_full = monolith.get_dataframe(
     """
