@@ -18,10 +18,10 @@ fh.setLevel(logging.DEBUG)
 
 # stream handler
 ch = logging.StreamHandler()
-ch.setLevel(logging.INFO)
+ch.setLevel(logging.DEBUG)
 
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format="%(levelname)-8s%(asctime)s        %(module)-25.25s %(message)s \n",
     datefmt="%Y-%m-%d %H:%M:%S",
     handlers=(fh, ch,)
@@ -32,6 +32,7 @@ db_cw = ConfigWorker("/configs/db.ini")
 # --------------------------------------------------------------------------------------------------------------------
 #                                                   DATABASE
 # --------------------------------------------------------------------------------------------------------------------
+logging.debug("Database objects initialization")
 
 bq = BigQueryWorker(db_cw, "bigquery")
 monolith = InHouseDbWorker(db_cw, "monolith")
@@ -46,8 +47,9 @@ ld = ld if ld else dt.date.today() - timedelta(days=1)
 
 last_date = pd.to_datetime(ld).date()
 
-period = dt.date.today() - timedelta(days=7)
+period = dt.date.today() - timedelta(days=10)
 
+logging.debug("Payments query")
 df_payments_full = monolith.get_dataframe(
     """
     select distinct 
@@ -72,6 +74,7 @@ df_payments_full = monolith.get_dataframe(
 df_payments_full['num'] = df_payments_full.groupby('id_user').cumcount() + 1
 df_payments_full['po_date'] = pd.to_datetime(df_payments_full['po_date']).dt.date
 
+logging.debug("Logins query")
 df = bq.get_dataframe(
     """
         WITH users AS (
@@ -109,6 +112,7 @@ df = bq.get_dataframe(
     )
 )
 
+logging.debug("Transformation")
 df['date'] = pd.to_datetime(df['date']).dt.date
 new_df = pd.merge(df, df_payments_full, how='left', left_on=['id_user', 'date'], right_on=['id_user', 'po_date'])
 new_df['po_date'] = pd.to_datetime(new_df['po_date']).dt.date
@@ -120,7 +124,6 @@ new_df = new_df.drop_duplicates()
 # --------------------------------------------------------------------------------------------------------------------
 #                                                   MATRIX
 # --------------------------------------------------------------------------------------------------------------------
-
 def new_ns_validator(now, region):
     matrix = pd.DataFrame()
 
@@ -320,8 +323,8 @@ def create_matrix(now, region):
     return pd.concat(l)
 
 
+logging.debug("Matrix iterations")
 for region in ('cis', 'asia', 'latam'):
-    print(region)
     for one_day in pd.date_range(dt.date.today() - timedelta(days=8), last_date).to_pydatetime():
         matrix = create_matrix(one_day, region)
         matrix = matrix.reset_index()
@@ -329,7 +332,6 @@ for region in ('cis', 'asia', 'latam'):
         matrix["region"] = region
         matrix["date_state"] = str(one_day)[0:10]
         data_loader.upload_data("core_migration_matrix", matrix)
-
 
 # --------------------------------------------------------------------------------------------------------------------
 #                                                   SERIES
@@ -461,6 +463,7 @@ def active_ns_series(now, region):
     return df
 
 
+logging.debug("Series iteration")
 for region in {'cis', 'asia', 'latam'}:
     for now in pd.date_range(last_date, dt.date.today() - timedelta(days=1)).to_pydatetime():
         temp = pd.concat([
