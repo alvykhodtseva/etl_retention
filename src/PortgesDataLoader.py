@@ -81,15 +81,22 @@ class PostgresDataLoader:
 		logger.debug("Method `__get_table_constraints` was called")
 
 		query: str = """
-			SELECT c.column_name, c.data_type
-			FROM information_schema.table_constraints tc 
-			JOIN information_schema.constraint_column_usage AS ccu USING (constraint_schema, constraint_name) 
-			JOIN information_schema.columns AS c ON c.table_schema = tc.constraint_schema
-			  AND tc.table_name = c.table_name AND ccu.column_name = c.column_name
-			WHERE constraint_type = 'PRIMARY KEY' and tc.table_name = '{}'
-		""".format(table_name)
+			SELECT 
+				c.column_name
+			FROM 
+				information_schema.table_constraints tc 
+			JOIN 
+				information_schema.constraint_column_usage AS ccu USING (constraint_schema, constraint_name) 
+			JOIN 
+				information_schema.columns AS c ON c.table_schema = tc.constraint_schema AND tc.table_name = c.table_name AND ccu.column_name = c.column_name
+			WHERE 
+				constraint_type = 'PRIMARY KEY' and 
+				tc.table_name = '{table_name}'
+		""".format(table_name=table_name)
 
-		result: List[str] = [i[0] for i in self.db_worker.get_iterable(query)]
+		result: List[str] = list(
+			self.db_worker.get_iterable(query)
+		)
 
 		logger.debug("Results: {}".format(result))
 
