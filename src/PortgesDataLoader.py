@@ -91,14 +91,27 @@ class PostgresDataLoader:
 				information_schema.columns AS c ON c.table_schema = tc.constraint_schema AND tc.table_name = c.table_name AND ccu.column_name = c.column_name
 			WHERE 
 				constraint_type = 'PRIMARY KEY' and 
-				tc.table_name = '{table_name}'
-		""".format(table_name=table_name)
+				tc.table_name = '{}'
+		""".format(table_name)
 
 		result: List[str] = list(
 			self.db_worker.get_iterable(query)
 		)
 
-		logger.debug("Results: {}".format(result))
+		# if user is read only, you can only get constraints of a table that is owned by him
+		if not result:
+
+			query: str = """
+			SELECT
+				split_part(split_part(cast(pg_get_constraintdef(c.oid) as varchar(255)), '(', 2), ')', 1) as pk
+			FROM pg_constraint c
+			JOIN pg_namespace n ON n.oid = c.connamespace
+			WHERE 1=1
+			  AND n.nspname = 'public'
+			  AND CAST(conrelid::regclass AS VARCHAR(255)) = '{}'
+			""".format(table_name)
+
+			result = self.db_worker.get_iterable(query).fetchone()[0].split(",")
 
 		return result
 
