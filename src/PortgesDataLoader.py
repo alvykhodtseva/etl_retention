@@ -129,7 +129,7 @@ class PostgresDataLoader:
 		'''.format(table, columns_s, v)
 
 		# c for constraints
-		query += ' ON CONFLICT ({}) DO UPDATE SET '.format(', '.join(map(str, constraints)))
+		query += ' ON CONFLICT ({}) DO UPDATE SET '.format(', '.join(constraints))
 
 		query += ', '.join([i + ' = excluded.{}'.format(i) for i in columns])
 
