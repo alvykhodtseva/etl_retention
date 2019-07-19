@@ -18,10 +18,10 @@ fh.setLevel(logging.DEBUG)
 
 # stream handler
 ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
+ch.setLevel(logging.INFO)
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="%(levelname)-8s%(asctime)s        %(module)-25.25s %(message)s \n",
     datefmt="%Y-%m-%d %H:%M:%S",
     handlers=(fh, ch,)
