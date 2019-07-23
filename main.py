@@ -50,14 +50,19 @@ ld = ld if ld else dt.date.today() - timedelta(days=9)
 last_date = pd.to_datetime(ld).date()
 
 period = dt.date.today() - timedelta(days=30)
-year_pediod = dt.date.today() - timedelta(days=360)
+year_pediod = dt.date.today() - timedelta(days=365)
 
 logging.debug("Payments query")
 df_payments_full = monolith.get_dataframe(
     """
     select distinct 
         id_user, 
-        date(po.date_created) as po_date
+        date(po.date_created) as po_date, 
+        case 
+            when u.id_mirror in (1, 11, 14, 17, 20, 29,  30, 31, 32, 35, 37, 38, 40, 42, 43, 45) then 'cis' 
+            when u.id_mirror in (23, 26, 39, 44, 46, 47, 48, 49) then 'asia' 
+            when u.id_mirror = 41 then 'latam' 
+        end as region
     from 
         x27_payment_orders po
     join 
@@ -119,7 +124,7 @@ df = bq.get_dataframe(
 
 logging.debug("Transformation")
 df['date'] = pd.to_datetime(df['date']).dt.date
-new_df = pd.merge(df, df_payments_full, how='left', left_on=['id_user', 'date'], right_on=['id_user', 'po_date'])
+new_df = pd.merge(df, df_payments_full, how='outer', left_on=['id_user', 'date', 'region'], right_on=['id_user', 'po_date', 'region'])
 new_df['po_date'] = pd.to_datetime(new_df['po_date']).dt.date
 new_df['date'] = pd.to_datetime(new_df['date']).dt.date
 new_df['u_date_created'] = pd.to_datetime(new_df['u_date_created']).dt.date
@@ -471,7 +476,7 @@ def active_ns_series(now, region):
 
 
 logging.debug("Series iteration")
-for region in {'cis', 'asia', 'latam'}:
+for region in ('cis', 'asia', 'latam'):
     for now in pd.date_range(last_date, dt.date.today() - timedelta(days=1)).to_pydatetime():
         temp = pd.concat([
             new_ns_series(now, region),
