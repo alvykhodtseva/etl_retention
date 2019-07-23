@@ -50,7 +50,7 @@ ld = ld if ld else dt.date.today() - timedelta(days=9)
 last_date = pd.to_datetime(ld).date()
 
 period = dt.date.today() - timedelta(days=30)
-half_year_pediod = dt.date.today() - timedelta(days=180)
+year_pediod = dt.date.today() - timedelta(days=360)
 
 logging.debug("Payments query")
 df_payments_full = monolith.get_dataframe(
@@ -68,7 +68,7 @@ df_payments_full = monolith.get_dataframe(
         and po.id_status in (3, 18, 21)
         and u.id_partner not in ('-1', '1', '2', '3', '4', '5', 'mikula', 'tech_vb_test')
     order by id_user, po_date asc
-    """.format(str(half_year_pediod))
+    """.format(str(year_pediod))
 )
 
 df_payments_full['num'] = df_payments_full.groupby('id_user').cumcount() + 1
@@ -411,7 +411,9 @@ def churn_spenders_series(now, region):
     new_df_region = new_df[new_df['region'] == region]
 
     _7days_ago = (now - timedelta(days=6))
-    early = set(new_df_region[(new_df_region['po_date'] < _7days_ago)].id_user)
+    _30days_ago = (now - timedelta(days=29))
+
+    early = set(new_df_region[(new_df_region['po_date']>=_30days_ago)&(new_df_region['po_date']<_7days_ago)].id_user)
     new = set(new_df_region[(new_df_region['date'] >= _7days_ago) & (new_df_region['date'] <= now)].id_user)
     res = early.difference(new)
     df = pd.DataFrame(
