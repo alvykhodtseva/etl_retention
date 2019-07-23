@@ -43,11 +43,12 @@ data_loader = PostgresDataLoader(postgres)
 #                                                   CALCULATION
 # --------------------------------------------------------------------------------------------------------------------
 ld = postgres.get_iterable("select max(date_state) from core_state_series").fetchone()[0]
-ld = ld if ld else dt.date.today() - timedelta(days=1)
+ld = ld if ld else dt.date.today() - timedelta(days=9)
 
 last_date = pd.to_datetime(ld).date()
 
 period = dt.date.today() - timedelta(days=30)
+half_year_pediod = dt.date.today() - timedelta(days=180)
 
 logging.debug("Payments query")
 df_payments_full = monolith.get_dataframe(
@@ -59,14 +60,14 @@ df_payments_full = monolith.get_dataframe(
         x27_payment_orders po
     join 
         x27_users u on u.id = po.id_user
-    where 
-    po.date_created >= '{}' and po.date_created < '{}' 
-    and po.code_package not in ('code', 'learn', 'test')
-    and po.id_status in (3, 18, 21)
-    and u.id_partner not in ('-1', '1', '2', '3', '4', '5', 'mikula', 'tech_vb_test')
+    where 1=1
+        and po.date_created between '{}' and '{}' 
+        and po.code_package not in ('code', 'learn', 'test')
+        and po.id_status in (3, 18, 21)
+        and u.id_partner not in ('-1', '1', '2', '3', '4', '5', 'mikula', 'tech_vb_test')
     order by id_user, po_date asc
     """.format(
-        str(period),
+        str(half_year_pediod),
         str(last_date + timedelta(days=2))
     )
 )
@@ -325,7 +326,7 @@ def create_matrix(now, region):
 
 logging.debug("Matrix iterations")
 for region in ('cis', 'asia', 'latam'):
-    for one_day in pd.date_range(dt.date.today() - timedelta(days=8), last_date).to_pydatetime():
+    for one_day in pd.date_range(last_date, dt.date.today() - timedelta(days=8)).to_pydatetime():
         matrix = create_matrix(one_day, region)
         matrix = matrix.reset_index()
         matrix.columns = ["source_state" if x == 'index' else x for x in matrix.columns]
