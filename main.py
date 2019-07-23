@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+# TODO: synchronous logging (in Docker logs are written in batched and you cannot view them in real time)
+
 from datetime import timedelta
 import datetime as dt
 import logging
@@ -66,10 +68,7 @@ df_payments_full = monolith.get_dataframe(
         and po.id_status in (3, 18, 21)
         and u.id_partner not in ('-1', '1', '2', '3', '4', '5', 'mikula', 'tech_vb_test')
     order by id_user, po_date asc
-    """.format(
-        str(half_year_pediod),
-        str(last_date + timedelta(days=2))
-    )
+    """.format(str(half_year_pediod))
 )
 
 df_payments_full['num'] = df_payments_full.groupby('id_user').cumcount() + 1
@@ -79,17 +78,24 @@ logging.debug("Logins query")
 df = bq.get_dataframe(
     """
         WITH users AS (
-          SELECT id, date_created, id_mirror 
-          FROM product.db_users 
+          SELECT 
+            id, 
+            date_created, 
+            id_mirror 
+          FROM 
+            product.db_users 
           WHERE 1=1
               AND id_partner not in ('-1', '1', '2', '3', '4', '5', 'mikula', 'tech_vb_test', 'test')
               AND gender = 'male'
-              AND (id_blocked is NULL or id_blocked = 0) 
+              -- AND (id_blocked is NULL or id_blocked = 0) 
         ),
 
         logins AS (
-          SELECT id_user, date_created 
-          FROM product.users_logins 
+          SELECT 
+            id_user, 
+            date_created 
+          FROM 
+            product.users_logins 
           WHERE 1=1
             date_created >= TIMESTAMP('{}')
         )
@@ -108,10 +114,7 @@ df = bq.get_dataframe(
            logins e
         inner join 
             users u on u.id = e.id_user
-    """.format(
-        str(period),
-        str(last_date + timedelta(days=2))
-    )
+    """.format(str(period))
 )
 
 logging.debug("Transformation")
