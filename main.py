@@ -61,7 +61,7 @@ df_payments_full = monolith.get_dataframe(
     join 
         x27_users u on u.id = po.id_user
     where 1=1
-        and po.date_created between '{}' and '{}' 
+        and po.date_created >= '{}'
         and po.code_package not in ('code', 'learn', 'test')
         and po.id_status in (3, 18, 21)
         and u.id_partner not in ('-1', '1', '2', '3', '4', '5', 'mikula', 'tech_vb_test')
@@ -90,7 +90,8 @@ df = bq.get_dataframe(
         logins AS (
           SELECT id_user, date_created 
           FROM product.users_logins 
-          WHERE date_created BETWEEN '{}' AND '{}'
+          WHERE 1=1
+            date_created >= TIMESTAMP('{}')
         )
 
 
