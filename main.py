@@ -97,7 +97,7 @@ df = bq.get_dataframe(
           FROM 
             product.users_logins 
           WHERE 1=1
-            date_created >= TIMESTAMP('{}')
+            AND date_created >= TIMESTAMP('{}')
         )
 
 
