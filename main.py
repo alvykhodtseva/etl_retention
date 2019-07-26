@@ -47,10 +47,13 @@ data_loader = PostgresDataLoader(postgres)
 ld = postgres.get_iterable("select max(date_state) from core_state_series").fetchone()[0]
 ld = ld if ld else dt.date.today() - timedelta(days=9)
 
-last_date = pd.to_datetime(ld).date()
+ld_matrix = postgres.get_iterable("select max(date_state) from core_migration_matrix").fetchone()[0]
+ld_matrix = ld_matrix if ld_matrix else dt.date.today() - timedelta(days=9)
+
+last_date_matrix = pd.to_datetime(ld_matrix).date()
 
 period = dt.date.today() - timedelta(days=30)
-year_pediod = dt.date.today() - timedelta(days=365)
+half_year_period = dt.date.today() - timedelta(days=180)
 
 logging.debug("Payments query")
 df_payments_full = monolith.get_dataframe(
@@ -73,7 +76,7 @@ df_payments_full = monolith.get_dataframe(
         and po.id_status in (3, 18, 21)
         and u.id_partner not in ('-1', '1', '2', '3', '4', '5', 'mikula', 'tech_vb_test')
     order by id_user, po_date asc
-    """.format(str(year_pediod))
+    """.format(str(half_year_period))
 )
 
 df_payments_full['num'] = df_payments_full.groupby('id_user').cumcount() + 1
@@ -335,7 +338,7 @@ def create_matrix(now, region):
 
 logging.debug("Matrix iterations")
 for region in ('cis', 'asia', 'latam'):
-    for one_day in pd.date_range(last_date, dt.date.today() - timedelta(days=8)).to_pydatetime():
+    for one_day in pd.date_range(last_date_matrix, dt.date.today() - timedelta(days=8)).to_pydatetime():
         matrix = create_matrix(one_day, region)
         matrix = matrix.reset_index()
         matrix.columns = ["source_state" if x == 'index' else x for x in matrix.columns]
