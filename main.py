@@ -51,6 +51,7 @@ ld_matrix = postgres.get_iterable("select max(date_state) from core_migration_ma
 ld_matrix = ld_matrix if ld_matrix else dt.date.today() - timedelta(days=9)
 
 last_date_matrix = pd.to_datetime(ld_matrix).date()
+last_date = pd.to_datetime(ld).date()
 
 period = dt.date.today() - timedelta(days=30)
 half_year_period = dt.date.today() - timedelta(days=180)
@@ -491,3 +492,5 @@ for region in ('cis', 'asia', 'latam'):
         ])
 
         data_loader.upload_data("core_state_series", temp)
+
+
