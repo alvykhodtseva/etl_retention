@@ -53,12 +53,13 @@ data_loader = PostgresDataLoader(postgres)
 # kostyl time!!!
 ld = '2019-07-01'
 ld_matrix = '2019-07-01'
+# end kostyl 
 
 last_date_matrix = pd.to_datetime(ld_matrix).date()
 last_date = pd.to_datetime(ld).date()
 
-period = dt.date.today() - timedelta(days=30)
-half_year_period = dt.date.today() - timedelta(days=180)
+period = last_date - timedelta(days=30)
+half_year_period = last_date - timedelta(days=180)
 
 logging.debug("Payments query")
 df_payments_full = monolith.get_dataframe(
