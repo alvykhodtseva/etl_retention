@@ -45,7 +45,7 @@ data_loader = PostgresDataLoader(postgres)
 #                                                   CALCULATION
 # --------------------------------------------------------------------------------------------------------------------
 # ld = postgres.get_iterable("select max(date_state) from core_state_series").fetchone()[0]
-ld = '2019-01-01'
+ld = '2019-07-01'
 
 last_date = pd.to_datetime(ld).date()
 
