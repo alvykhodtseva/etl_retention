@@ -44,15 +44,15 @@ data_loader = PostgresDataLoader(postgres)
 # --------------------------------------------------------------------------------------------------------------------
 #                                                   CALCULATION
 # --------------------------------------------------------------------------------------------------------------------
-# ld = postgres.get_iterable("select max(date_state) from core_state_series").fetchone()[0]
-# ld = ld if ld else dt.date.today() - timedelta(days=9)
+ld = postgres.get_iterable("select max(date_state) from core_state_series").fetchone()[0]
+ld = ld if ld else dt.date.today() - timedelta(days=9)
 
-# ld_matrix = postgres.get_iterable("select max(date_state) from core_migration_matrix").fetchone()[0]
-# ld_matrix = ld_matrix if ld_matrix else dt.date.today() - timedelta(days=9)
+ld_matrix = postgres.get_iterable("select max(date_state) from core_migration_matrix").fetchone()[0]
+ld_matrix = ld_matrix if ld_matrix else dt.date.today() - timedelta(days=9)
 
 # kostyl time!!!
-ld = '2019-07-01'
-ld_matrix = '2019-07-01'
+# ld = '2019-07-01'
+# ld_matrix = '2019-07-01'
 # end kostyl 
 
 last_date_matrix = pd.to_datetime(ld_matrix).date()
