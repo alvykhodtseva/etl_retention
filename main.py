@@ -59,7 +59,7 @@ last_date_matrix = pd.to_datetime(ld_matrix).date()
 last_date = pd.to_datetime(ld).date()
 
 period = last_date - timedelta(days=30)
-half_year_period = last_date - timedelta(days=180)
+year_period = last_date - timedelta(days=365)
 
 logging.debug("Payments query")
 df_payments_full = monolith.get_dataframe(
@@ -82,7 +82,7 @@ df_payments_full = monolith.get_dataframe(
         and po.id_status in (3, 18, 21)
         and u.id_partner not in ('-1', '1', '2', '3', '4', '5', 'mikula', 'tech_vb_test')
     order by id_user, po_date asc
-    """.format(str(half_year_period))
+    """.format(str(year_period))
 )
 
 df_payments_full['num'] = df_payments_full.groupby('id_user').cumcount() + 1
