@@ -83,15 +83,18 @@ def new_ns_validator(now, region):
 	)
 
 	only_1_pymnt = (set(df_temp[df_temp.num == 1]['id_user'])).difference(more_than_1_pymnt)
-
-	matrix.loc['new_ns', 'active_ns'] = len(
-		set(df_temp['id_user']).difference(set(df_temp[df_temp.num >= 1]['id_user']))) / len(res) * 100
-
-	matrix.loc['new_ns', 'churn_ns'] = (len(res) - len(set(df_temp['id_user']))) / len(res) * 100
-
-	matrix.loc['new_ns', 'new_spenders'] = len(only_1_pymnt) / len(res) * 100
-
-	matrix.loc['new_ns', 'active_spenders'] = len(set(df_temp[df_temp.num > 1]['id_user'])) / len(res) * 100
+	
+	if len(res):
+		matrix.loc['new_ns', 'active_ns'] = len(
+			set(df_temp['id_user']).difference(set(df_temp[df_temp.num >= 1]['id_user']))) / len(res) * 100
+		matrix.loc['new_ns', 'churn_ns'] = (len(res) - len(set(df_temp['id_user']))) / len(res) * 100
+		matrix.loc['new_ns', 'new_spenders'] = len(only_1_pymnt) / len(res) * 100
+		matrix.loc['new_ns', 'active_spenders'] = len(set(df_temp[df_temp.num > 1]['id_user'])) / len(res) * 100
+	else:
+		matrix.loc['new_ns', 'active_ns'] = 0
+		matrix.loc['new_ns', 'churn_ns'] = 0
+		matrix.loc['new_ns', 'new_spenders'] = 0
+		matrix.loc['new_ns', 'active_spenders'] = 0
 
 	return matrix
 
@@ -126,11 +129,17 @@ def active_ns_validator(now, region):
 	more_than_1_pymnt = set(df_temp[df_temp.num > 1]['id_user'])
 
 	only_1_pymnt = (set(df_temp[df_temp.num == 1]['id_user'])).difference(more_than_1_pymnt)
-
-	matrix.loc['active_ns', 'active_ns'] = len(set(df_temp['id_user']).difference(set(df_temp[df_temp.num >= 1]['id_user']))) / len(res) * 100
-	matrix.loc['active_ns', 'churn_ns'] = (len(res) - len(set(df_temp['id_user']))) / len(res) * 100
-	matrix.loc['active_ns', 'new_spenders'] = len(only_1_pymnt) / len(res) * 100
-	matrix.loc['active_ns', 'active_spenders'] = len(set(df_temp[df_temp.num > 1]['id_user'])) / len(res) * 100
+	
+	if len(res):
+		matrix.loc['active_ns', 'active_ns'] = len(set(df_temp['id_user']).difference(set(df_temp[df_temp.num >= 1]['id_user']))) / len(res) * 100
+		matrix.loc['active_ns', 'churn_ns'] = (len(res) - len(set(df_temp['id_user']))) / len(res) * 100
+		matrix.loc['active_ns', 'new_spenders'] = len(only_1_pymnt) / len(res) * 100
+		matrix.loc['active_ns', 'active_spenders'] = len(set(df_temp[df_temp.num > 1]['id_user'])) / len(res) * 100
+	else:
+		matrix.loc['active_ns', 'active_ns'] = 0
+		matrix.loc['active_ns', 'churn_ns'] = 0
+		matrix.loc['active_ns', 'new_spenders'] = 0
+		matrix.loc['active_ns', 'active_spenders'] = 0
 
 	return matrix
 
@@ -153,11 +162,19 @@ def churn_ns_validator(now, region):
 		(new_df_region['date'] > now) & (new_df_region['date'] <= _7days_after) & (new_df_region.id_user.isin(res))]
 	more_than_1_pymnt = set(df_temp[df_temp.num > 1]['id_user'])
 	only_1_pymnt = (set(df_temp[df_temp.num == 1]['id_user'])).difference(more_than_1_pymnt)
-	matrix.loc['churn_ns', 'active_ns'] = len(
-		set(df_temp['id_user']).difference(set(df_temp[df_temp.num >= 1]['id_user']))) / len(res) * 100
-	matrix.loc['churn_ns', 'churn_ns'] = (len(res) - len(set(df_temp['id_user']))) / len(res) * 100
-	matrix.loc['churn_ns', 'new_spenders'] = len(only_1_pymnt) / len(res) * 100
-	matrix.loc['churn_ns', 'active_spenders'] = len(set(df_temp[df_temp.num > 1]['id_user'])) / len(res) * 100
+	
+	if len(res):
+		matrix.loc['churn_ns', 'active_ns'] = len(
+			set(df_temp['id_user']).difference(set(df_temp[df_temp.num >= 1]['id_user']))) / len(res) * 100
+		matrix.loc['churn_ns', 'churn_ns'] = (len(res) - len(set(df_temp['id_user']))) / len(res) * 100
+		matrix.loc['churn_ns', 'new_spenders'] = len(only_1_pymnt) / len(res) * 100
+		matrix.loc['churn_ns', 'active_spenders'] = len(set(df_temp[df_temp.num > 1]['id_user'])) / len(res) * 100
+	else:
+		matrix.loc['churn_ns', 'active_ns'] = 0
+		matrix.loc['churn_ns', 'churn_ns'] = 0
+		matrix.loc['churn_ns', 'new_spenders'] = 0
+		matrix.loc['churn_ns', 'active_spenders'] = 0
+		
 	return matrix
 
 
@@ -177,9 +194,16 @@ def new_spenders_validator(now, region):
 		(new_df_region['date'] > now) & (new_df_region['date'] <= _7days_after) & (new_df_region.id_user.isin(res))]
 	more_payments = set(df_temp[(df_temp.num > 1)].id_user)
 	login = set(df_temp['id_user'])
-	matrix.loc['new_spenders', 'churn_spenders'] = (len(res) - len(set(df_temp['id_user']))) / len(res) * 100
-	matrix.loc['new_spenders', 'active_users'] = len(login.difference(more_payments)) / len(res) * 100
-	matrix.loc['new_spenders', 'active_spenders'] = len(set(df_temp[df_temp.num > 1]['id_user'])) / len(res) * 100
+	
+	if len(res):
+		matrix.loc['new_spenders', 'churn_spenders'] = (len(res) - len(set(df_temp['id_user']))) / len(res) * 100
+		matrix.loc['new_spenders', 'active_users'] = len(login.difference(more_payments)) / len(res) * 100
+		matrix.loc['new_spenders', 'active_spenders'] = len(set(df_temp[df_temp.num > 1]['id_user'])) / len(res) * 100
+	else:
+		matrix.loc['new_spenders', 'churn_spenders'] = 0
+		matrix.loc['new_spenders', 'active_users'] = 0
+		matrix.loc['new_spenders', 'active_spenders'] = 0
+		
 	return matrix
 
 
@@ -196,9 +220,16 @@ def active_spenders_validator(now, region):
 		(new_df_region['date'] > now) & (new_df_region['date'] <= _7days_after) & (new_df_region.id_user.isin(res))]
 	more_payments = set(df_temp[(df_temp.num > 1)].id_user)
 	login = set(df_temp['id_user'])
-	matrix.loc['active_spenders', 'churn_spenders'] = (len(res) - len(set(df_temp['id_user']))) / len(res) * 100
-	matrix.loc['active_spenders', 'active_users'] = len(login.difference(more_payments)) / len(res) * 100
-	matrix.loc['active_spenders', 'active_spenders'] = len(set(df_temp[df_temp.num > 1]['id_user'])) / len(res) * 100
+	
+	if len(res):
+		matrix.loc['active_spenders', 'churn_spenders'] = (len(res) - len(set(df_temp['id_user']))) / len(res) * 100
+		matrix.loc['active_spenders', 'active_users'] = len(login.difference(more_payments)) / len(res) * 100
+		matrix.loc['active_spenders', 'active_spenders'] = len(set(df_temp[df_temp.num > 1]['id_user'])) / len(res) * 100
+	else:
+		matrix.loc['active_spenders', 'churn_spenders'] = 0
+		matrix.loc['active_spenders', 'active_users'] = 0
+		matrix.loc['active_spenders', 'active_spenders'] = 0
+		
 	return matrix
 
 
@@ -219,9 +250,16 @@ def active_users_validator(now, region):
 		(new_df_region['date'] > now) & (new_df_region['date'] <= _7days_after) & (new_df_region.id_user.isin(res))]
 	more_payments = set(df_temp[(df_temp.num > 1)].id_user)
 	login = set(df_temp['id_user'])
-	matrix.loc['active_users', 'churn_spenders'] = (len(res) - len(set(df_temp['id_user']))) / len(res) * 100
-	matrix.loc['active_users', 'active_users'] = len(login.difference(more_payments)) / len(res) * 100
-	matrix.loc['active_users', 'active_spenders'] = len(set(df_temp[df_temp.num > 1]['id_user'])) / len(res) * 100
+	
+	if len(res):
+		matrix.loc['active_users', 'churn_spenders'] = (len(res) - len(set(df_temp['id_user']))) / len(res) * 100
+		matrix.loc['active_users', 'active_users'] = len(login.difference(more_payments)) / len(res) * 100
+		matrix.loc['active_users', 'active_spenders'] = len(set(df_temp[df_temp.num > 1]['id_user'])) / len(res) * 100
+	else:
+		matrix.loc['active_users', 'churn_spenders'] = 0
+		matrix.loc['active_users', 'active_users'] = 0
+		matrix.loc['active_users', 'active_spenders'] = 0
+		
 	return matrix
 
 
@@ -241,9 +279,16 @@ def churn_spenders_validator(now, region):
 		(new_df_region['date'] > now) & (new_df_region['date'] <= _7days_after) & (new_df_region.id_user.isin(res))]
 	more_payments = set(df_temp[(df_temp.num > 1)].id_user)
 	login = set(df_temp['id_user'])
-	matrix.loc['churn_spenders', 'churn_spenders'] = (len(res) - len(set(df_temp['id_user']))) / len(res) * 100
-	matrix.loc['churn_spenders', 'active_users'] = len(login.difference(more_payments)) / len(res) * 100
-	matrix.loc['churn_spenders', 'active_spenders'] = len(set(df_temp[df_temp.num > 1]['id_user'])) / len(res) * 100
+	
+	if len(res):
+		matrix.loc['churn_spenders', 'churn_spenders'] = (len(res) - len(set(df_temp['id_user']))) / len(res) * 100
+		matrix.loc['churn_spenders', 'active_users'] = len(login.difference(more_payments)) / len(res) * 100
+		matrix.loc['churn_spenders', 'active_spenders'] = len(set(df_temp[df_temp.num > 1]['id_user'])) / len(res) * 100
+	else:
+		matrix.loc['churn_spenders', 'churn_spenders'] = 0
+		matrix.loc['churn_spenders', 'active_users'] = 0
+		matrix.loc['churn_spenders', 'active_spenders'] = 0
+		
 	return matrix
 
 
@@ -411,7 +456,7 @@ for month_iter in (6,):
 	else:
 		end_period = dt.datetime(2019, 1, 8)
 
-	year_period = first_day_of_month - timedelta(days=360)
+	year_period = first_day_of_month - timedelta(days=365)
 
 	logging.debug("Payments query")
 	df_payments_full = monolith.get_dataframe(
@@ -550,7 +595,7 @@ for month_iter in (6,):
 # 	start_period = first_day_of_month - timedelta(days=30)
 # 	end_period = dt.datetime(2019, month_iter+1, 8)
 #
-# 	year_period = first_day_of_month - timedelta(days=360)
+# 	year_period = first_day_of_month - timedelta(days=365)
 #
 # 	logging.debug("Payments query")
 # 	df_payments_full = monolith.get_dataframe(
@@ -689,7 +734,7 @@ for month_iter in (6,):
 # 	start_period = first_day_of_month - timedelta(days=30)
 # 	end_period = dt.date.today()
 #
-# 	year_period = first_day_of_month - timedelta(days=360)
+# 	year_period = first_day_of_month - timedelta(days=365)
 #
 # 	logging.debug("Payments query")
 # 	df_payments_full = monolith.get_dataframe(
