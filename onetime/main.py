@@ -44,7 +44,10 @@ data_loader = PostgresDataLoader(postgres)
 # --------------------------------------------------------------------------------------------------------------------
 #                                                   MATRIX
 # --------------------------------------------------------------------------------------------------------------------
+
+
 def new_ns_validator(now, region):
+
 	matrix = pd.DataFrame()
 
 	now = now.date()
@@ -94,26 +97,41 @@ def new_ns_validator(now, region):
 
 
 def active_ns_validator(now, region):
+
 	matrix = pd.DataFrame()
+
 	now = now.date()
+
 	new_df_region = new_df[new_df['region'] == region]
+
 	_7days_ago = (now - timedelta(days=6))
+
 	had_payments = set(new_df_region[(new_df_region.po_date <= now) & (new_df_region.num >= 1)].id_user)
-	login_and_date_created = set(new_df_region[
-									 (new_df_region['date'] >= _7days_ago) & (new_df_region['date'] <= now) & (
-												 new_df_region['u_date_created'] < _7days_ago)].id_user)
+
+	login_and_date_created = set(
+		new_df_region[
+			(new_df_region['date'] >= _7days_ago) &
+			(new_df_region['date'] <= now) &
+			(new_df_region['u_date_created'] < _7days_ago)
+		].id_user
+	)
+
 	res = login_and_date_created.difference(had_payments)
+
 	_7days_after = (now + timedelta(days=7))
-	df_temp = pd.DataFrame()
+
 	df_temp = new_df_region[
 		(new_df_region['date'] > now) & (new_df_region['date'] <= _7days_after) & (new_df_region.id_user.isin(res))]
+
 	more_than_1_pymnt = set(df_temp[df_temp.num > 1]['id_user'])
+
 	only_1_pymnt = (set(df_temp[df_temp.num == 1]['id_user'])).difference(more_than_1_pymnt)
-	matrix.loc['active_ns', 'active_ns'] = len(
-		set(df_temp['id_user']).difference(set(df_temp[df_temp.num >= 1]['id_user']))) / len(res) * 100
+
+	matrix.loc['active_ns', 'active_ns'] = len(set(df_temp['id_user']).difference(set(df_temp[df_temp.num >= 1]['id_user']))) / len(res) * 100
 	matrix.loc['active_ns', 'churn_ns'] = (len(res) - len(set(df_temp['id_user']))) / len(res) * 100
 	matrix.loc['active_ns', 'new_spenders'] = len(only_1_pymnt) / len(res) * 100
 	matrix.loc['active_ns', 'active_spenders'] = len(set(df_temp[df_temp.num > 1]['id_user'])) / len(res) * 100
+
 	return matrix
 
 
@@ -381,7 +399,7 @@ def active_ns_series(now, region):
 
 # for month_iter in (1,2,3,4,5,6,7,8,9,10,11,12):
 
-for month_iter in (5, 6, 7):
+for month_iter in (6,):
 
 	logging.info("Year: {}\tMonth: {}".format(2018, month_iter))
 
@@ -475,7 +493,8 @@ for month_iter in (5, 6, 7):
 	new_df['u_date_created'] = pd.to_datetime(new_df['u_date_created']).dt.date
 	new_df = new_df.drop_duplicates()
 
-	for region in ('cis', 'asia', 'latam'):
+	# for region in ('cis', 'asia', 'latam'):
+	for region in ('latam', ):
 
 		logging.info("Region: {}".format(region))
 		logging.info("Series")
