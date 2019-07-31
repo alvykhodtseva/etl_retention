@@ -58,8 +58,8 @@ ld_matrix = ld_matrix if ld_matrix else dt.date.today() - timedelta(days=9)
 last_date_matrix = pd.to_datetime(ld_matrix).date()
 last_date = pd.to_datetime(ld).date()
 
-period = last_date - timedelta(days=30)
-year_period = last_date - timedelta(days=365)
+period = last_date_matrix - timedelta(days=30)
+year_period = last_date_matrix - timedelta(days=365)
 
 logging.debug("Payments query")
 df_payments_full = monolith.get_dataframe(
