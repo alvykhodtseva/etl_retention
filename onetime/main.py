@@ -442,151 +442,151 @@ def active_ns_series(now, region):
 #                                                   CALCULATION
 # --------------------------------------------------------------------------------------------------------------------
 
-for month_iter in (1,2,3,4,5,6,7,8,9,10,11,12):
-
-# for month_iter in (6,):
-
-	logging.info("Year: {}\tMonth: {}".format(2018, month_iter))
-
-	first_day_of_month = dt.datetime(2018, month_iter, 1)
-	start_period = first_day_of_month - timedelta(days=30)
-
-	if month_iter !=12:
-		end_period = dt.datetime(2018, month_iter+1, 8)
-	else:
-		end_period = dt.datetime(2019, 1, 8)
-
-	year_period = first_day_of_month - timedelta(days=365)
-
-	logging.debug("Payments query")
-	df_payments_full = monolith.get_dataframe(
-		"""
-		select distinct 
-			id_user, 
-			date(po.date_created) as po_date, 
-			case 
-				when u.id_mirror in (1, 11, 14, 17, 20, 29,  30, 31, 32, 35, 37, 38, 40, 42, 43, 45) then 'cis' 
-				when u.id_mirror in (23, 26, 39, 44, 46, 47, 48, 49) then 'asia' 
-				when u.id_mirror = 41 then 'latam' 
-			end as region
-		from 
-			x27_payment_orders po
-		join 
-			x27_users u on u.id = po.id_user
-		where 1=1
-			and po.date_created >= '{}'
-			and po.date_created <= '{}'
-			and po.code_package not in ('code', 'learn', 'test')
-			and po.id_status in (3, 18, 21)
-			and u.id_partner not in ('-1', '1', '2', '3', '4', '5', 'mikula', 'tech_vb_test')
-		order by id_user, po_date asc
-		""".format(str(year_period), str(end_period))
-	)
-
-	df_payments_full['num'] = df_payments_full.groupby('id_user').cumcount() + 1
-	df_payments_full['po_date'] = pd.to_datetime(df_payments_full['po_date']).dt.date
-
-	logging.debug("Logins query")
-	df = bq.get_dataframe(
-		"""
-			WITH users AS (
-			  SELECT 
-				id, 
-				date_created, 
-				id_mirror 
-			  FROM 
-				product.db_users 
-			  WHERE 1=1
-				  AND id_partner not in ('-1', '1', '2', '3', '4', '5', 'mikula', 'tech_vb_test', 'test')
-				  AND gender = 'male'
-				  -- AND (id_blocked is NULL or id_blocked = 0) 
-			),
-
-			logins AS (
-			  SELECT 
-				id_user, 
-				date_created 
-			  FROM 
-				product.users_logins 
-			  WHERE 1=1
-				AND date_created >= TIMESTAMP('{}')
-				AND date_created <= TIMESTAMP('{}')
-			)
-
-
-			select distinct 
-				u.id as id_user, 
-				date(u.date_created) as u_date_created,
-				date(e.date_created) as date, 
-				case 
-					when u.id_mirror in (1, 11, 14, 17, 20, 29,  30, 31, 32, 35, 37, 38, 40, 42, 43, 45) then 'cis' 
-					when u.id_mirror in (23, 26, 39, 44, 46, 47, 48, 49) then 'asia' 
-					when u.id_mirror = 41 then 'latam' 
-				end as region
-			from 
-			   logins e
-			inner join 
-				users u on u.id = e.id_user
-		""".format(str(start_period), str(end_period))
-	)
-
-	logging.debug("Transformation")
-	df['date'] = pd.to_datetime(df['date']).dt.date
-	new_df = pd.merge(df, df_payments_full, how='outer', left_on=['id_user', 'date', 'region'], right_on=['id_user', 'po_date', 'region'])
-	new_df['po_date'] = pd.to_datetime(new_df['po_date']).dt.date
-	new_df['date'] = pd.to_datetime(new_df['date']).dt.date
-	new_df['u_date_created'] = pd.to_datetime(new_df['u_date_created']).dt.date
-	new_df = new_df.drop_duplicates()
-
-	for region in ('cis', 'asia', 'latam'):
-
-		logging.info("Region: {}".format(region))
-		logging.info("Series")
-		for now in pd.date_range(first_day_of_month, end_period - dt.timedelta(days=8)).to_pydatetime():
-
-			events = new_df[
-					(new_df["region"] == region) &
-					(new_df["date"] == now.date())
-				]["id_user"].count()
-
-			if events > 0:
-				pass
-			else:
-				continue
-
-			temp = pd.concat([
-				new_ns_series(now, region),
-				active_ns_series(now, region),
-				new_spenders_series(now, region),
-				active_spenders_series(now, region),
-				churn_spenders_series(now, region),
-				active_users_series(now, region),
-			])
-
-			data_loader.upload_data("core_state_series", temp)
-
-		logging.info("Matrix")
-		for one_day in pd.date_range(first_day_of_month, end_period - dt.timedelta(days=8)).to_pydatetime():
-
-			events = new_df[
-					(new_df["region"] == region) &
-					(new_df["date"] == one_day.date())
-				]["id_user"].count()
-
-			if events > 0:
-				pass
-			else:
-				continue
-
-			matrix = create_matrix(one_day, region)
-			matrix = matrix.reset_index()
-			matrix.columns = ["source_state" if x == 'index' else x for x in matrix.columns]
-			matrix["region"] = region
-			matrix["date_state"] = str(one_day)[0:10]
-			data_loader.upload_data("core_migration_matrix", matrix)
+# for month_iter in (1,2,3,4,5,6,7,8,9,10,11,12):
+#
+# 	logging.info("Year: {}\tMonth: {}".format(2018, month_iter))
+#
+# 	first_day_of_month = dt.datetime(2018, month_iter, 1)
+# 	start_period = first_day_of_month - timedelta(days=30)
+#
+# 	if month_iter !=12:
+# 		end_period = dt.datetime(2018, month_iter+1, 8)
+# 	else:
+# 		end_period = dt.datetime(2019, 1, 8)
+#
+# 	year_period = first_day_of_month - timedelta(days=365)
+#
+# 	logging.debug("Payments query")
+# 	df_payments_full = monolith.get_dataframe(
+# 		"""
+# 		select distinct
+# 			id_user,
+# 			date(po.date_created) as po_date,
+# 			case
+# 				when u.id_mirror in (1, 11, 14, 17, 20, 29,  30, 31, 32, 35, 37, 38, 40, 42, 43, 45) then 'cis'
+# 				when u.id_mirror in (23, 26, 39, 44, 46, 47, 48, 49) then 'asia'
+# 				when u.id_mirror = 41 then 'latam'
+# 			end as region
+# 		from
+# 			x27_payment_orders po
+# 		join
+# 			x27_users u on u.id = po.id_user
+# 		where 1=1
+# 			and po.date_created >= '{}'
+# 			and po.date_created <= '{}'
+# 			and po.code_package not in ('code', 'learn', 'test')
+# 			and po.id_status in (3, 18, 21)
+# 			and u.id_partner not in ('-1', '1', '2', '3', '4', '5', 'mikula', 'tech_vb_test')
+# 		order by id_user, po_date asc
+# 		""".format(str(year_period), str(end_period))
+# 	)
+#
+# 	df_payments_full['num'] = df_payments_full.groupby('id_user').cumcount() + 1
+# 	df_payments_full['po_date'] = pd.to_datetime(df_payments_full['po_date']).dt.date
+#
+# 	logging.debug("Logins query")
+# 	df = bq.get_dataframe(
+# 		"""
+# 			WITH users AS (
+# 			  SELECT
+# 				id,
+# 				date_created,
+# 				id_mirror
+# 			  FROM
+# 				product.db_users
+# 			  WHERE 1=1
+# 				  AND id_partner not in ('-1', '1', '2', '3', '4', '5', 'mikula', 'tech_vb_test', 'test')
+# 				  AND gender = 'male'
+# 				  -- AND (id_blocked is NULL or id_blocked = 0)
+# 			),
+#
+# 			logins AS (
+# 			  SELECT
+# 				id_user,
+# 				date_created
+# 			  FROM
+# 				product.users_logins
+# 			  WHERE 1=1
+# 				AND date_created >= TIMESTAMP('{}')
+# 				AND date_created <= TIMESTAMP('{}')
+# 			)
+#
+#
+# 			select distinct
+# 				u.id as id_user,
+# 				date(u.date_created) as u_date_created,
+# 				date(e.date_created) as date,
+# 				case
+# 					when u.id_mirror in (1, 11, 14, 17, 20, 29,  30, 31, 32, 35, 37, 38, 40, 42, 43, 45) then 'cis'
+# 					when u.id_mirror in (23, 26, 39, 44, 46, 47, 48, 49) then 'asia'
+# 					when u.id_mirror = 41 then 'latam'
+# 				end as region
+# 			from
+# 			   logins e
+# 			inner join
+# 				users u on u.id = e.id_user
+# 		""".format(str(start_period), str(end_period))
+# 	)
+#
+# 	logging.debug("Transformation")
+# 	df['date'] = pd.to_datetime(df['date']).dt.date
+# 	new_df = pd.merge(df, df_payments_full, how='outer', left_on=['id_user', 'date', 'region'], right_on=['id_user', 'po_date', 'region'])
+# 	new_df['po_date'] = pd.to_datetime(new_df['po_date']).dt.date
+# 	new_df['date'] = pd.to_datetime(new_df['date']).dt.date
+# 	new_df['u_date_created'] = pd.to_datetime(new_df['u_date_created']).dt.date
+# 	new_df = new_df.drop_duplicates()
+#
+# 	for region in ('cis', 'asia', 'latam'):
+#
+# 		logging.info("Region: {}".format(region))
+# 		logging.info("Series")
+# 		for now in pd.date_range(first_day_of_month, end_period - dt.timedelta(days=8)).to_pydatetime():
+#
+# 			events = new_df[
+# 					(new_df["region"] == region) &
+# 					(new_df["date"] == now.date())
+# 				]["id_user"].count()
+#
+# 			if events > 0:
+# 				pass
+# 			else:
+# 				continue
+#
+# 			temp = pd.concat([
+# 				new_ns_series(now, region),
+# 				active_ns_series(now, region),
+# 				new_spenders_series(now, region),
+# 				active_spenders_series(now, region),
+# 				churn_spenders_series(now, region),
+# 				active_users_series(now, region),
+# 			])
+#
+# 			data_loader.upload_data("core_state_series", temp)
+#
+# 		logging.info("Matrix")
+# 		for one_day in pd.date_range(first_day_of_month, end_period - dt.timedelta(days=8)).to_pydatetime():
+#
+# 			events = new_df[
+# 					(new_df["region"] == region) &
+# 					(new_df["date"] == one_day.date())
+# 				]["id_user"].count()
+#
+# 			if events > 0:
+# 				pass
+# 			else:
+# 				continue
+#
+# 			matrix = create_matrix(one_day, region)
+# 			matrix = matrix.reset_index()
+# 			matrix.columns = ["source_state" if x == 'index' else x for x in matrix.columns]
+# 			matrix["region"] = region
+# 			matrix["date_state"] = str(one_day)[0:10]
+# 			data_loader.upload_data("core_migration_matrix", matrix)
 
 
-for month_iter in (1,2,3,4,5,6):
+# for month_iter in (1,2,3,4,5,6):
+
+for month_iter in (5, 6):
 
 	logging.info("Year: {}\tMonth: {}".format(2019, month_iter))
 
