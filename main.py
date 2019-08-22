@@ -62,28 +62,29 @@ period = last_date_matrix - timedelta(days=30)
 year_period = last_date_matrix - timedelta(days=365)
 
 logging.debug("Payments query")
-df_payments_full = monolith.get_dataframe(
-    """
-    select distinct 
-        id_user, 
-        date(po.date_created) as po_date, 
-        case 
-            when u.id_mirror in (1, 11, 14, 17, 20, 29,  30, 31, 32, 35, 37, 38, 40, 42, 43, 45) then 'cis' 
-            when u.id_mirror in (23, 26, 39, 44, 46, 47, 48, 49) then 'asia' 
-            when u.id_mirror = 41 then 'latam' 
-        end as region
-    from 
-        x27_payment_orders po
-    join 
-        x27_users u on u.id = po.id_user
-    where 1=1
-        and po.date_created >= '{}'
-        and po.code_package not in ('code', 'learn', 'test')
-        and po.id_status in (3, 18, 21)
-        and u.id_partner not in ('-1', '1', '2', '3', '4', '5', 'mikula', 'tech_vb_test')
-    order by id_user, po_date asc
-    """.format(str(year_period))
+df_payments_full = bq.get_dataframe(
+""" 
+SELECT
+  DISTINCT id_user, 
+  DATE(po.date_created) AS po_date, 
+  CASE 
+    WHEN u.id_mirror IN (1, 11, 14, 17, 20, 29,  30, 31, 32, 35, 37, 38, 40, 42, 43, 45) THEN 'cis' 
+    WHEN u.id_mirror IN (23, 26, 39, 44, 46, 47, 48, 49) THEN 'asia' 
+    WHEN u.id_mirror = 41 THEN 'latam' 
+  END AS region
+FROM 
+  `payments.transactions` t
+JOIN 
+  `payments.orders` po ON po.id = t.id_order
+JOIN 
+  `product.db_users` u ON u.id = po.id_user
+WHERE 1=1
+  AND po.date_created >= '{}'
+  AND t.id_status IN (4)
+  AND u.id_partner NOT IN ('-1', '1', '2', '3', '4', '5', 'mikula', 'tech_vb_test')
+""".format(str(year_period))
 )
+
 
 df_payments_full['num'] = df_payments_full.groupby('id_user').cumcount() + 1
 df_payments_full['po_date'] = pd.to_datetime(df_payments_full['po_date']).dt.date
